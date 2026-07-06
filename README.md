@@ -1,9 +1,29 @@
 # Merge Blocks – 2048 Puzzle
 
-A complete, ready-to-publish Android game: a classic 4x4 merge-number puzzle
-(2048-style). The game *mechanic* is not protected by copyright and the
-original 2048 was released under the MIT license, so clones are legal —
-this project uses **its own code, name, colors, and icon** (no copied assets).
+A complete, ready-to-publish Android game: a 4x4 merge-number puzzle
+(2048-style) upgraded with boosters, trap tiles, combos and juicy animations.
+The base game *mechanic* is not protected by copyright and the original 2048
+was released under the MIT license, so clones are legal — this project uses
+**its own code, name, colors, and icon** (no copied assets).
+
+## Gameplay features
+
+- **Animated everything** — tiles slide and pop, merges burst particles,
+  floating "+points" text, screen shake, haptic feedback, combo banner.
+- **Combo system** — consecutive merging swipes multiply merge points up to
+  ×4, shown as a pulsing "COMBO ×N" banner.
+- **Trap tiles** that create pressure and strategy:
+  - 🪨 **Blocker** — an immovable stone that splits the board; crumbles on
+    its own after 10 moves, or smash it with the hammer.
+  - 💣 **Bomb** — slides around but never merges; its fuse ticks down every
+    move and at zero it explodes, destroying itself and its neighbours.
+- **Boosters** (start with a few; refill by watching a rewarded ad — a
+  second strong ad hook besides "continue"):
+  - ↩ **Undo** — take back the last action.
+  - 🔨 **Hammer** — tap any tile (including traps) to smash it.
+  - 🔀 **Shuffle** — reshuffle all movable tiles when you're cornered.
+- **Continue after game over** by watching a rewarded ad (clears traps and
+  the smallest tiles).
 
 Monetization is **AdMob only** (no in-app purchases, no ad spend needed):
 

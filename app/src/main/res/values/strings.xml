@@ -5,6 +5,14 @@
     <string name="best">BEST</string>
     <string name="zero">0</string>
     <string name="new_game">New Game</string>
+    <string name="new_game_short">New</string>
     <string name="game_over">Game Over</string>
     <string name="watch_ad_continue">Watch ad to continue</string>
+    <string name="booster_undo">↩ %s</string>
+    <string name="booster_hammer">🔨 %s</string>
+    <string name="booster_shuffle">🔀 %s</string>
+    <string name="hammer_hint">Tap any tile to smash it!</string>
+    <string name="nothing_to_undo">Nothing to undo yet</string>
+    <string name="no_ad_available">No ad available right now, try again soon</string>
+    <string name="refill_hint">Watch the ad to earn %d boosters!</string>
 </resources>

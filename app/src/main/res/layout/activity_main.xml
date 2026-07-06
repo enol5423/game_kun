@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background">
+    android:background="@drawable/bg_gradient">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +14,9 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:padding="16dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="12dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -67,22 +69,60 @@
             </LinearLayout>
         </LinearLayout>
 
-        <Button
-            android:id="@+id/newGameButton"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginEnd="16dp"
-            android:backgroundTint="@color/accent"
-            android:text="@string/new_game"
-            android:textColor="@color/text_light" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="10dp">
+
+            <TextView
+                android:id="@+id/undoButton"
+                style="@style/BoosterButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/hammerButton"
+                style="@style/BoosterButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp" />
+
+            <TextView
+                android:id="@+id/shuffleButton"
+                style="@style/BoosterButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp" />
+
+            <Button
+                android:id="@+id/newGameButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:backgroundTint="@color/accent"
+                android:text="@string/new_game_short"
+                android:textColor="@color/text_light" />
+        </LinearLayout>
 
         <com.gamekun.mergeblocks.GameView
             android:id="@+id/gameView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_margin="16dp" />
+            android:layout_margin="12dp" />
 
         <LinearLayout
             android:id="@+id/adContainer"
