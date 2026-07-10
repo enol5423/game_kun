@@ -1,7 +1,14 @@
 package com.gamekun.mergeblocks
 
+import android.graphics.Color
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.AbsoluteSizeSpan
+import android.text.style.ForegroundColorSpan
+import android.view.HapticFeedbackConstants
 import android.view.View
+import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -37,6 +44,8 @@ class MainActivity : AppCompatActivity() {
         private const val START_UNDO = 3
         private const val START_HAMMER = 2
         private const val START_SHUFFLE = 2
+        private val READY_COLOR = Color.WHITE
+        private val EMPTY_COLOR = Color.parseColor("#0F4D2A")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +67,9 @@ class MainActivity : AppCompatActivity() {
         shuffleCount = prefs.getInt("boost_shuffle", START_SHUFFLE)
         updateScores()
         updateBoosterBar()
+        startBreathing(undoButton, 0)
+        startBreathing(hammerButton, 200)
+        startBreathing(shuffleButton, 400)
 
         findViewById<Button>(R.id.newGameButton).setOnClickListener { startNewGame() }
         findViewById<Button>(R.id.restartButton).setOnClickListener { startNewGame() }
@@ -79,13 +91,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         undoButton.setOnClickListener {
+            bounce(undoButton)
             if (undoCount <= 0) {
                 offerRefill("boost_undo")
-            } else if (gameView.game.undo()) {
+            } else if (gameView.animateUndo()) {
                 undoCount--
                 saveBoosters()
                 gameOverOverlay.visibility = View.GONE
-                gameView.refresh()
                 updateScores()
                 updateBoosterBar()
             } else {
@@ -93,21 +105,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
         hammerButton.setOnClickListener {
+            bounce(hammerButton)
             if (hammerCount <= 0) {
                 offerRefill("boost_hammer")
             } else {
                 gameView.hammerMode = !gameView.hammerMode
-                if (gameView.hammerMode) toast(getString(R.string.hammer_hint))
+                if (gameView.hammerMode) {
+                    toast(getString(R.string.hammer_hint))
+                    hammerButton.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                }
                 updateBoosterBar()
             }
         }
         shuffleButton.setOnClickListener {
+            bounce(shuffleButton)
             if (shuffleCount <= 0) {
                 offerRefill("boost_shuffle")
-            } else if (gameView.game.shuffle()) {
+            } else if (gameView.animateShuffle()) {
                 shuffleCount--
                 saveBoosters()
-                gameView.refresh()
                 updateScores()
                 updateBoosterBar()
             }
@@ -143,15 +159,63 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateBoosterBar() {
-        undoButton.text = getString(R.string.booster_undo, boosterLabel(undoCount))
-        hammerButton.text = getString(R.string.booster_hammer, boosterLabel(hammerCount))
-        shuffleButton.text = getString(R.string.booster_shuffle, boosterLabel(shuffleCount))
-        hammerButton.isSelected = gameView.hammerMode
-        hammerButton.alpha = if (gameView.hammerMode) 1f else 0.9f
+    /** Builds a two-line label: big icon on top, count (or "AD") as a small badge below. */
+    private fun boosterLabel(icon: String, count: Int): SpannableString {
+        val badge = if (count > 0) count.toString() else getString(R.string.ad_badge)
+        val full = "$icon\n$badge"
+        val badgeStart = icon.length + 1
+        return SpannableString(full).apply {
+            setSpan(AbsoluteSizeSpan(26, true), 0, icon.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(AbsoluteSizeSpan(13, true), badgeStart, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(
+                ForegroundColorSpan(if (count > 0) READY_COLOR else EMPTY_COLOR),
+                badgeStart, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
     }
 
-    private fun boosterLabel(count: Int) = if (count > 0) count.toString() else "AD"
+    private fun updateBoosterBar() {
+        undoButton.text = boosterLabel("↩", undoCount)
+        hammerButton.text = boosterLabel("🔨", hammerCount)
+        shuffleButton.text = boosterLabel("🔀", shuffleCount)
+
+        undoButton.setBackgroundResource(if (undoCount > 0) R.drawable.booster_undo_bg else R.drawable.booster_ad_bg)
+        shuffleButton.setBackgroundResource(if (shuffleCount > 0) R.drawable.booster_shuffle_bg else R.drawable.booster_ad_bg)
+        hammerButton.setBackgroundResource(
+            when {
+                gameView.hammerMode -> R.drawable.booster_armed_bg
+                hammerCount > 0 -> R.drawable.booster_hammer_bg
+                else -> R.drawable.booster_ad_bg
+            }
+        )
+        hammerButton.animate()
+            .scaleX(if (gameView.hammerMode) 1.12f else 1f)
+            .scaleY(if (gameView.hammerMode) 1.12f else 1f)
+            .setInterpolator(OvershootInterpolator())
+            .setDuration(180)
+            .start()
+    }
+
+    /** Subtle continuous "look at me" breathing pulse so boosters aren't easy to miss. */
+    private fun startBreathing(view: View, startDelay: Long) {
+        view.animate()
+            .alpha(0.82f)
+            .setStartDelay(startDelay)
+            .setDuration(1200)
+            .withEndAction {
+                view.animate().alpha(1f).setDuration(1200).withEndAction {
+                    startBreathing(view, 0)
+                }.start()
+            }.start()
+    }
+
+    private fun bounce(view: View) {
+        view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        view.animate().scaleX(0.85f).scaleY(0.85f).setDuration(80).withEndAction {
+            view.animate().scaleX(1f).scaleY(1f).setDuration(140)
+                .setInterpolator(OvershootInterpolator()).start()
+        }.start()
+    }
 
     private fun saveBoosters() {
         prefs.edit()
@@ -206,6 +270,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        undoButton.animate().cancel()
+        hammerButton.animate().cancel()
+        shuffleButton.animate().cancel()
         adView?.destroy()
         super.onDestroy()
     }
