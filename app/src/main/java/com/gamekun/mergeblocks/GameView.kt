@@ -2,17 +2,18 @@ package com.gamekun.mergeblocks
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
-import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import androidx.core.content.ContextCompat
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.min
@@ -80,8 +81,6 @@ class GameView @JvmOverloads constructor(
     private val blockerDark = Color.parseColor("#5B5763")
     private val blockerLight = Color.parseColor("#726D7C")
     private val hazardYellow = Color.parseColor("#FFC300")
-    private val bombShellColor = Color.parseColor("#1B1420")
-    private val bombShineColor = Color.parseColor("#4A3F55")
     private val bombTileBg = Color.parseColor("#2A2130")
 
     // -------------------------------------------------------- animation
@@ -128,6 +127,30 @@ class GameView @JvmOverloads constructor(
     // Hammer hover-highlight (finger-down preview before release).
     private var hoverR = -1
     private var hoverC = -1
+
+    // ------------------------------------------------------ icon bitmaps
+
+    /** Professionally designed Game-Icons.net glyphs (CC BY 3.0), rasterized once per size. */
+    private val iconCache = HashMap<String, Bitmap>()
+
+    private fun iconBitmap(resId: Int, sizePx: Int): Bitmap {
+        val key = "$resId:$sizePx"
+        return iconCache.getOrPut(key) {
+            val drawable = ContextCompat.getDrawable(context, resId)!!.mutate()
+            val bmp = Bitmap.createBitmap(sizePx.coerceAtLeast(1), sizePx.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+            val c = Canvas(bmp)
+            drawable.setBounds(0, 0, sizePx, sizePx)
+            drawable.draw(c)
+            bmp
+        }
+    }
+
+    private fun drawIcon(canvas: Canvas, resId: Int, cx: Float, cy: Float, size: Float, alpha: Int = 255) {
+        val sizePx = size.toInt().coerceAtLeast(1)
+        val bmp = iconBitmap(resId, sizePx)
+        fxPaint.alpha = alpha
+        canvas.drawBitmap(bmp, cx - sizePx / 2f, cy - sizePx / 2f, fxPaint)
+    }
 
     // -------------------------------------------------------- geometry
 
@@ -545,25 +568,13 @@ class GameView @JvmOverloads constructor(
         canvas.drawRoundRect(inner, gap, gap, strokePaint)
         strokePaint.pathEffect = null
 
-        // Padlock icon: body + shackle + keyhole.
-        val lockW = rect.width() * 0.32f
-        val lockH = lockW * 0.82f
-        val lockLeft = rect.centerX() - lockW / 2f
-        val lockTop = rect.centerY() - lockH / 2f + rect.height() * 0.08f
-        val lockRect = RectF(lockLeft, lockTop, lockLeft + lockW, lockTop + lockH)
-        cellPaint.color = Color.parseColor("#2E2B33")
-        canvas.drawRoundRect(lockRect, gap * 0.5f, gap * 0.5f, cellPaint)
-
-        strokePaint.color = Color.parseColor("#2E2B33")
-        strokePaint.strokeWidth = lockW * 0.17f
-        val shackleRect = RectF(
-            lockRect.centerX() - lockW * 0.26f, lockTop - lockH * 0.62f,
-            lockRect.centerX() + lockW * 0.26f, lockTop + lockH * 0.18f
-        )
-        canvas.drawArc(shackleRect, 180f, 180f, false, strokePaint)
-
-        cellPaint.color = blockerLight
-        canvas.drawCircle(lockRect.centerX(), lockRect.centerY() - lockH * 0.05f, lockW * 0.09f, cellPaint)
+        // Padlock icon (Game-Icons.net, CC BY 3.0) — small drop shadow, then the glyph itself.
+        val lockSize = rect.width() * 0.42f
+        val lockCx = rect.centerX()
+        val lockCy = rect.centerY() + rect.height() * 0.06f
+        cellPaint.color = Color.parseColor("#40000000")
+        canvas.drawCircle(lockCx, lockCy, lockSize * 0.42f, cellPaint)
+        drawIcon(canvas, R.drawable.ic_lock, lockCx, lockCy, lockSize)
 
         // Countdown badge, top-right corner.
         val badgeR = rect.width() * 0.155f
@@ -591,44 +602,31 @@ class GameView @JvmOverloads constructor(
         val glowColor = if (urgent) Color.parseColor("#FF3B30") else Color.parseColor("#FF8C42")
 
         val bodyCx = rect.centerX()
-        val bodyCy = rect.centerY() + rect.height() * 0.08f
+        val bodyCy = rect.centerY() + rect.height() * 0.05f
         val bodyR = rect.width() * 0.30f * pulse
 
+        // Danger glow behind the icon — brighter and faster as the fuse runs down.
         cellPaint.color = glowColor
-        cellPaint.setShadowLayer(rect.width() * 0.22f, 0f, 0f, glowColor)
+        cellPaint.setShadowLayer(rect.width() * 0.24f, 0f, 0f, glowColor)
         canvas.drawCircle(bodyCx, bodyCy, bodyR, cellPaint)
         cellPaint.clearShadowLayer()
 
-        cellPaint.color = bombShellColor
-        canvas.drawCircle(bodyCx, bodyCy, bodyR * 0.9f, cellPaint)
-        cellPaint.color = bombShineColor
-        canvas.drawCircle(bodyCx - bodyR * 0.32f, bodyCy - bodyR * 0.32f, bodyR * 0.22f, cellPaint)
+        // Grenade glyph (Game-Icons.net, CC BY 3.0).
+        drawIcon(canvas, R.drawable.ic_bomb, bodyCx, bodyCy, bodyR * 2.1f)
 
-        // Fuse curling up-right from the body.
+        // Countdown badge, top-right corner — matches the blocker tile's language.
+        val badgeR = rect.width() * 0.155f
+        val badgeCx = rect.right - badgeR * 1.3f
+        val badgeCy = rect.top + badgeR * 1.3f
+        cellPaint.color = glowColor
+        canvas.drawCircle(badgeCx, badgeCy, badgeR, cellPaint)
         strokePaint.pathEffect = null
-        strokePaint.color = Color.parseColor("#C9A66B")
-        strokePaint.strokeWidth = rect.width() * 0.045f
-        val fuseStartX = bodyCx + bodyR * 0.55f
-        val fuseStartY = bodyCy - bodyR * 0.78f
-        val tipX = fuseStartX + bodyR * 0.15f
-        val tipY = fuseStartY - bodyR * 1.25f
-        val fusePath = Path().apply {
-            moveTo(fuseStartX, fuseStartY)
-            quadTo(fuseStartX + bodyR * 0.45f, fuseStartY - bodyR * 0.7f, tipX, tipY)
-        }
-        canvas.drawPath(fusePath, strokePaint)
-
-        // Flickering spark.
-        val flicker = 0.75f + 0.25f * sin(t / 60.0).toFloat()
-        val sparkColor = if ((t / 90) % 2 == 0L) Color.parseColor("#FFD23F") else Color.parseColor("#FF6B35")
-        cellPaint.color = sparkColor
-        cellPaint.setShadowLayer(rect.width() * 0.16f, 0f, 0f, sparkColor)
-        canvas.drawCircle(tipX, tipY, bodyR * 0.24f * flicker, cellPaint)
-        cellPaint.clearShadowLayer()
-
+        strokePaint.color = Color.parseColor("#1E1B24")
+        strokePaint.strokeWidth = badgeR * 0.16f
+        canvas.drawCircle(badgeCx, badgeCy, badgeR * 0.92f, strokePaint)
         textPaint.color = Color.WHITE
-        textPaint.textSize = bodyR * 0.95f
-        canvas.drawText(tile.timer.toString(), bodyCx, textBaseline(bodyCy), textPaint)
+        textPaint.textSize = badgeR * 1.15f
+        canvas.drawText(tile.timer.toString(), badgeCx, textBaseline(badgeCy), textPaint)
     }
 
     private fun textBaseline(centerY: Float) =

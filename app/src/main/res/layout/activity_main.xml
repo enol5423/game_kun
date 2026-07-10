@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_gradient">
@@ -78,28 +79,82 @@
             android:paddingEnd="16dp"
             android:paddingTop="10dp">
 
-            <TextView
+            <LinearLayout
                 android:id="@+id/undoButton"
                 style="@style/BoosterButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
+                <ImageView
+                    android:id="@+id/undoIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_undo"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/undoBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_light" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/hammerButton"
                 style="@style/BoosterButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp" />
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
 
-            <TextView
+                <ImageView
+                    android:id="@+id/hammerIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_hammer"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/hammerBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_light" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/shuffleButton"
                 style="@style/BoosterButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp" />
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/shuffleIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_shuffle"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/shuffleBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_light" />
+            </LinearLayout>
 
             <Button
                 android:id="@+id/newGameButton"

@@ -4,7 +4,9 @@ A complete, ready-to-publish Android game: a 4x4 merge-number puzzle
 (2048-style) upgraded with boosters, trap tiles, combos and juicy animations.
 The base game *mechanic* is not protected by copyright and the original 2048
 was released under the MIT license, so clones are legal — this project uses
-**its own code, name, colors, and icon** (no copied assets).
+its own code, name, colors, and layout, plus a handful of professionally
+designed icons under a permissive open license (see **Credits** below —
+important if you publish this app).
 
 ## Gameplay features
 
@@ -100,6 +102,21 @@ own real ads** (AdMob bans the account).
   earns roughly $1–5 per 1,000 daily active users per day from this ad mix.
   Publishing several small games and keeping the ones that get traction is
   the standard playbook.
+
+## Credits (required if you publish)
+
+The bomb, padlock, hammer, undo and shuffle icons (`app/src/main/res/drawable/
+ic_bomb.xml`, `ic_lock.xml`, `ic_hammer.xml`, `ic_undo.xml`, `ic_shuffle.xml`)
+are from [Game-Icons.net](https://game-icons.net), licensed
+**CC BY 3.0** — free to use commercially, but attribution is legally required.
+Everything else (code, tile colors, layout, app icon, sounds/haptics) is
+original to this project.
+
+Before you publish, add a credit somewhere a player can find it — the
+simplest options:
+- A line in the Play Store store listing description, e.g. "Icons by
+  game-icons.net, CC BY 3.0."
+- Or an in-app "About" entry with the same text.
 
 ## Project layout
 

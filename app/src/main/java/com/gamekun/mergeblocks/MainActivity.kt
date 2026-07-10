@@ -1,11 +1,6 @@
 package com.gamekun.mergeblocks
 
-import android.graphics.Color
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.AbsoluteSizeSpan
-import android.text.style.ForegroundColorSpan
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.animation.OvershootInterpolator
@@ -25,9 +20,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bestText: TextView
     private lateinit var gameOverOverlay: LinearLayout
     private lateinit var continueButton: Button
-    private lateinit var undoButton: TextView
-    private lateinit var hammerButton: TextView
-    private lateinit var shuffleButton: TextView
+    private lateinit var undoButton: LinearLayout
+    private lateinit var hammerButton: LinearLayout
+    private lateinit var shuffleButton: LinearLayout
+    private lateinit var undoBadge: TextView
+    private lateinit var hammerBadge: TextView
+    private lateinit var shuffleBadge: TextView
     private lateinit var adManager: AdManager
     private var adView: AdView? = null
 
@@ -44,8 +42,6 @@ class MainActivity : AppCompatActivity() {
         private const val START_UNDO = 3
         private const val START_HAMMER = 2
         private const val START_SHUFFLE = 2
-        private val READY_COLOR = Color.WHITE
-        private val EMPTY_COLOR = Color.parseColor("#0F4D2A")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +56,9 @@ class MainActivity : AppCompatActivity() {
         undoButton = findViewById(R.id.undoButton)
         hammerButton = findViewById(R.id.hammerButton)
         shuffleButton = findViewById(R.id.shuffleButton)
+        undoBadge = findViewById(R.id.undoBadge)
+        hammerBadge = findViewById(R.id.hammerBadge)
+        shuffleBadge = findViewById(R.id.shuffleBadge)
 
         bestScore = prefs.getInt("best_score", 0)
         undoCount = prefs.getInt("boost_undo", START_UNDO)
@@ -159,25 +158,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Builds a two-line label: big icon on top, count (or "AD") as a small badge below. */
-    private fun boosterLabel(icon: String, count: Int): SpannableString {
-        val badge = if (count > 0) count.toString() else getString(R.string.ad_badge)
-        val full = "$icon\n$badge"
-        val badgeStart = icon.length + 1
-        return SpannableString(full).apply {
-            setSpan(AbsoluteSizeSpan(26, true), 0, icon.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            setSpan(AbsoluteSizeSpan(13, true), badgeStart, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            setSpan(
-                ForegroundColorSpan(if (count > 0) READY_COLOR else EMPTY_COLOR),
-                badgeStart, full.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
+    private fun setBadge(badge: TextView, count: Int) {
+        badge.text = if (count > 0) count.toString() else getString(R.string.ad_badge)
     }
 
     private fun updateBoosterBar() {
-        undoButton.text = boosterLabel("↩", undoCount)
-        hammerButton.text = boosterLabel("🔨", hammerCount)
-        shuffleButton.text = boosterLabel("🔀", shuffleCount)
+        setBadge(undoBadge, undoCount)
+        setBadge(hammerBadge, hammerCount)
+        setBadge(shuffleBadge, shuffleCount)
 
         undoButton.setBackgroundResource(if (undoCount > 0) R.drawable.booster_undo_bg else R.drawable.booster_ad_bg)
         shuffleButton.setBackgroundResource(if (shuffleCount > 0) R.drawable.booster_shuffle_bg else R.drawable.booster_ad_bg)
