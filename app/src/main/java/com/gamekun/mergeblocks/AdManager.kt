@@ -30,14 +30,18 @@ class AdManager(private val activity: Activity) {
         const val REWARDED_ID = "ca-app-pub-3940256099942544/5224354917"
         const val BANNER_ID = "ca-app-pub-3940256099942544/6300978111"
 
-        /** Show an interstitial every N game-overs. */
-        const val INTERSTITIAL_FREQUENCY = 3
+        /** Never show two interstitials closer together than this. */
+        const val MIN_INTERSTITIAL_GAP_MS = 90_000L
+
+        /** Don't stack an interstitial right after a (chosen) rewarded ad. */
+        const val MIN_AFTER_REWARDED_MS = 25_000L
     }
 
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd? = null
-    private var gameOverCount = 0
     private var adsInitialized = false
+    private var lastInterstitialAt = 0L
+    private var lastRewardedAt = 0L
 
     /** Gathers UMP consent (required in EEA/UK), then starts the Mobile Ads SDK. */
     fun initialize(onReady: () -> Unit) {
@@ -102,20 +106,34 @@ class AdManager(private val activity: Activity) {
             })
     }
 
-    /** Call on every game over; shows an interstitial every [INTERSTITIAL_FREQUENCY] times. */
-    fun onGameOver() {
-        gameOverCount++
-        if (gameOverCount % INTERSTITIAL_FREQUENCY != 0) return
-        val ad = interstitialAd ?: run { loadInterstitial(); return }
-        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+    /**
+     * "Smart" interstitial: only shown at a natural break (a restart), never
+     * mid-run, rate-limited, and suppressed right after a rewarded ad. Always
+     * invokes [onClosed] whether or not an ad actually showed, so gameplay
+     * never depends on an ad being available.
+     */
+    fun maybeShowInterstitial(onClosed: () -> Unit) {
+        val now = System.currentTimeMillis()
+        val ad = interstitialAd
+        val eligible = ad != null &&
+            now - lastInterstitialAt > MIN_INTERSTITIAL_GAP_MS &&
+            now - lastRewardedAt > MIN_AFTER_REWARDED_MS
+        if (!eligible) {
+            onClosed()
+            return
+        }
+        ad!!.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
+                lastInterstitialAt = System.currentTimeMillis()
                 interstitialAd = null
                 loadInterstitial()
+                onClosed()
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 interstitialAd = null
                 loadInterstitial()
+                onClosed()
             }
         }
         ad.show(activity)
@@ -126,6 +144,7 @@ class AdManager(private val activity: Activity) {
     /** Shows the rewarded ad; [onReward] runs only if the user earned the reward. */
     fun showRewarded(onReward: () -> Unit) {
         val ad = rewardedAd ?: run { loadRewarded(); return }
+        lastRewardedAt = System.currentTimeMillis()
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 rewardedAd = null

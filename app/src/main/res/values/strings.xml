@@ -8,6 +8,14 @@
     <string name="new_game_short">New</string>
     <string name="game_over">Game Over</string>
     <string name="watch_ad_continue">Watch ad to continue</string>
+    <string name="stuck_title">NO MOVES!</string>
+    <string name="stuck_use_powerup">Use a power-up to break free 👇</string>
+    <string name="stuck_no_powerup">Out of power-ups — keep your run alive?</string>
+    <string name="or_divider">— or —</string>
+    <string name="extra_life">🎬  EXTRA LIFE</string>
+    <string name="free_powerups">🎬  FREE POWER-UPS</string>
+    <string name="try_again">TRY AGAIN</string>
+    <string name="powerups_added">+%d of every power-up!</string>
     <string name="ad_badge">AD</string>
     <string name="hammer_hint">Tap any tile to smash it!</string>
     <string name="mega_hint">Tap a tile — the mega bomb clears a 3×3 area!</string>

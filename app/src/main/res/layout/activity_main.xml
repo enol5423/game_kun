@@ -217,34 +217,113 @@
         android:background="@color/overlay"
         android:gravity="center"
         android:orientation="vertical"
+        android:padding="24dp"
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true">
 
         <TextView
+            android:id="@+id/stuckTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/game_over"
+            android:letterSpacing="0.05"
+            android:text="@string/stuck_title"
             android:textColor="@color/text_light"
-            android:textSize="36sp"
+            android:textSize="38sp"
             android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/continueButton"
+        <TextView
+            android:id="@+id/stuckSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/stuck_use_powerup"
+            android:textColor="@color/text_dim"
+            android:textSize="15sp" />
+
+        <!-- Power-ups the player still owns; shown so no-moves isn't a dead end. -->
+        <LinearLayout
+            android:id="@+id/stuckBoosterRow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="@color/gold"
-            android:text="@string/watch_ad_continue"
+            android:layout_marginTop="22dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/stuckUndo"
+                style="@style/StuckChip"
+                android:background="@drawable/booster_undo_bg">
+
+                <ImageView style="@style/StuckChipIcon" android:src="@drawable/ic_undo" />
+
+                <TextView android:id="@+id/stuckUndoBadge" style="@style/StuckChipBadge" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/stuckHammer"
+                style="@style/StuckChip"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/booster_hammer_bg">
+
+                <ImageView style="@style/StuckChipIcon" android:src="@drawable/ic_hammer" />
+
+                <TextView android:id="@+id/stuckHammerBadge" style="@style/StuckChipBadge" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/stuckShuffle"
+                style="@style/StuckChip"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/booster_shuffle_bg">
+
+                <ImageView style="@style/StuckChipIcon" android:src="@drawable/ic_shuffle" />
+
+                <TextView android:id="@+id/stuckShuffleBadge" style="@style/StuckChipBadge" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/stuckMega"
+                style="@style/StuckChip"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/booster_mega_bg">
+
+                <ImageView style="@style/StuckChipIcon" android:src="@drawable/ic_mega_bomb" />
+
+                <TextView android:id="@+id/stuckMegaBadge" style="@style/StuckChipBadge" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/stuckOr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="@string/or_divider"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/extraLifeButton"
+            style="@style/OverlayButton"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/menu_btn_gold"
+            android:text="@string/extra_life"
             android:textColor="@color/text_dark" />
 
-        <Button
-            android:id="@+id/restartButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/accent"
-            android:text="@string/new_game"
+        <TextView
+            android:id="@+id/powerupsButton"
+            style="@style/OverlayButton"
+            android:background="@drawable/menu_btn_green"
+            android:text="@string/free_powerups"
+            android:textColor="@color/text_light" />
+
+        <TextView
+            android:id="@+id/tryAgainButton"
+            style="@style/OverlayButton"
+            android:background="@drawable/menu_btn_dark"
+            android:text="@string/try_again"
             android:textColor="@color/text_light" />
     </LinearLayout>
 </FrameLayout>

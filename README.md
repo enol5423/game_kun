@@ -53,16 +53,31 @@ Because the app now touches the network by design, keep `INTERNET` +
 `ACCESS_NETWORK_STATE` in the manifest and declare data sharing (AdMob) in
 the Play **Data safety** form.
 
-Monetization is **AdMob only** (no in-app purchases, no ad spend needed):
+Monetization is **AdMob only** (no in-app purchases, no ad spend needed),
+and ads are shown *smartly* — players are never force-fed an ad mid-run;
+the strong hooks are opt-in because the player wants to keep going:
 
 | Ad type      | Where it shows                                  |
 |--------------|-------------------------------------------------|
 | Banner       | Bottom of the screen, always                    |
-| Interstitial | Every 3rd game over (`AdManager.INTERSTITIAL_FREQUENCY`) |
-| Rewarded     | "Watch ad to continue" on game over, and booster refills |
+| Interstitial | Only on **Try Again**, rate-limited (`MIN_INTERSTITIAL_GAP_MS`, ≥90s apart) and never right after a rewarded ad |
+| Rewarded (opt-in) | **Extra Life** and **Free Power-ups** on the "no moves" panel, plus refilling any empty booster |
 
-GDPR/EEA consent is handled via Google's UMP SDK (the consent form shows
-automatically where required).
+**No moves ≠ game over.** When the board locks, the player gets an adaptive
+**NO MOVES!** panel instead of a death screen:
+
+- If they still own power-ups, those are offered right there to break free
+  (Undo/Shuffle act immediately; Hammer/Mega arm a tap). The board is
+  re-checked after each — the run continues if a move opened up.
+- If they're out (or want more), they can **watch an ad for an Extra Life**
+  (revive) or **watch an ad for Power-ups** (refill) — shown only when an ad
+  is actually loaded, so there are never dead buttons — or just **Try Again**.
+
+This creates several layered, *chosen* ad moments (extra life, power-up
+refills, empty-booster refills) rather than forced interruptions. The one
+non-rewarded ad, the interstitial, fires only at the natural Try-Again break
+and is rate-limited. GDPR/EEA consent is handled via Google's UMP SDK (the
+consent form shows automatically where required).
 
 ---
 
