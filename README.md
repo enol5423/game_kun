@@ -59,7 +59,7 @@ the strong hooks are opt-in because the player wants to keep going:
 
 | Ad type      | Where it shows                                  |
 |--------------|-------------------------------------------------|
-| Banner       | Bottom of the screen, always                    |
+| Banner       | Bottom of the **gameplay** screen only, and only once a real ad has loaded (the slot stays collapsed otherwise — no empty ad band). No banners on splash / title / menu / loading / settings. |
 | Interstitial | Only on **Try Again**, rate-limited (`MIN_INTERSTITIAL_GAP_MS`, ≥90s apart) and never right after a rewarded ad |
 | Rewarded (opt-in) | **Extra Life** and **Free Power-ups** on the "no moves" panel, plus refilling any empty booster |
 

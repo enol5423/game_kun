@@ -69,6 +69,9 @@ class AdManager(private val activity: Activity) {
     private fun startAds(onReady: () -> Unit) {
         if (adsInitialized) return
         adsInitialized = true
+        // Grace period: the interstitial gap is measured from session start, so
+        // no interstitial can fire in the first MIN_INTERSTITIAL_GAP_MS of play.
+        lastInterstitialAt = System.currentTimeMillis()
         MobileAds.initialize(activity) {
             loadInterstitial()
             loadRewarded()

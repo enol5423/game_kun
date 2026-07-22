@@ -8,9 +8,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.LoadAdError
 
 class MainActivity : AppCompatActivity() {
 
@@ -377,9 +379,14 @@ class MainActivity : AppCompatActivity() {
     private fun loadBanner() {
         if (adView != null) return
         val container = findViewById<LinearLayout>(R.id.adContainer)
+        container.visibility = View.GONE // stay collapsed until an ad really arrives
         val banner = AdView(this).apply {
             adUnitId = AdManager.BANNER_ID
             setAdSize(AdSize.BANNER)
+            adListener = object : AdListener() {
+                override fun onAdLoaded() { container.visibility = View.VISIBLE }
+                override fun onAdFailedToLoad(error: LoadAdError) { container.visibility = View.GONE }
+            }
         }
         container.addView(banner)
         banner.loadAd(AdRequest.Builder().build())
