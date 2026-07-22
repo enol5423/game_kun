@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original emblem: three cascading merge tiles. Our own art, no copied assets. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- back tile (purple) -->
+    <path
+        android:fillColor="#8A4BC8"
+        android:pathData="M28,30 h74 a16,16 0 0 1 16,16 v74 a16,16 0 0 1 -16,16 h-74 a16,16 0 0 1 -16,-16 v-74 a16,16 0 0 1 16,-16 z" />
+    <!-- middle tile (orange) -->
+    <path
+        android:fillColor="#F2843F"
+        android:pathData="M63,58 h74 a16,16 0 0 1 16,16 v74 a16,16 0 0 1 -16,16 h-74 a16,16 0 0 1 -16,-16 v-74 a16,16 0 0 1 16,-16 z" />
+    <!-- front tile (gold) -->
+    <path
+        android:fillColor="#FFC300"
+        android:pathData="M98,86 h74 a16,16 0 0 1 16,16 v74 a16,16 0 0 1 -16,16 h-74 a16,16 0 0 1 -16,-16 v-74 a16,16 0 0 1 16,-16 z" />
+    <!-- highlight sheen on gold tile -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.25"
+        android:pathData="M98,86 h74 a16,16 0 0 1 16,16 v10 h-106 v-10 a16,16 0 0 1 16,-16 z" />
+</vector>

@@ -20,33 +20,36 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bestText: TextView
     private lateinit var gameOverOverlay: LinearLayout
     private lateinit var continueButton: Button
+
     private lateinit var undoButton: LinearLayout
     private lateinit var hammerButton: LinearLayout
     private lateinit var shuffleButton: LinearLayout
+    private lateinit var megaButton: LinearLayout
     private lateinit var undoBadge: TextView
     private lateinit var hammerBadge: TextView
     private lateinit var shuffleBadge: TextView
+    private lateinit var megaBadge: TextView
+
     private lateinit var adManager: AdManager
     private var adView: AdView? = null
 
-    private val prefs by lazy { getSharedPreferences("merge_blocks", MODE_PRIVATE) }
+    private val prefs by lazy { GameStore.prefs(this) }
     private var bestScore = 0
 
     // Booster inventory, persisted across sessions.
     private var undoCount = 0
     private var hammerCount = 0
     private var shuffleCount = 0
+    private var megaCount = 0
 
     companion object {
         private const val REWARD_AMOUNT = 3
-        private const val START_UNDO = 3
-        private const val START_HAMMER = 2
-        private const val START_SHUFFLE = 2
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        GameSettings.load(this)
 
         gameView = findViewById(R.id.gameView)
         scoreText = findViewById(R.id.scoreValue)
@@ -56,49 +59,56 @@ class MainActivity : AppCompatActivity() {
         undoButton = findViewById(R.id.undoButton)
         hammerButton = findViewById(R.id.hammerButton)
         shuffleButton = findViewById(R.id.shuffleButton)
+        megaButton = findViewById(R.id.megaButton)
         undoBadge = findViewById(R.id.undoBadge)
         hammerBadge = findViewById(R.id.hammerBadge)
         shuffleBadge = findViewById(R.id.shuffleBadge)
+        megaBadge = findViewById(R.id.megaBadge)
 
-        bestScore = prefs.getInt("best_score", 0)
-        undoCount = prefs.getInt("boost_undo", START_UNDO)
-        hammerCount = prefs.getInt("boost_hammer", START_HAMMER)
-        shuffleCount = prefs.getInt("boost_shuffle", START_SHUFFLE)
+        bestScore = GameStore.best(this)
+        undoCount = prefs.getInt(GameStore.KEY_UNDO, GameStore.START_UNDO)
+        hammerCount = prefs.getInt(GameStore.KEY_HAMMER, GameStore.START_HAMMER)
+        shuffleCount = prefs.getInt(GameStore.KEY_SHUFFLE, GameStore.START_SHUFFLE)
+        megaCount = prefs.getInt(GameStore.KEY_MEGA, GameStore.START_MEGA)
+
+        startFromIntent()
         updateScores()
         updateBoosterBar()
         startBreathing(undoButton, 0)
-        startBreathing(hammerButton, 200)
-        startBreathing(shuffleButton, 400)
+        startBreathing(hammerButton, 150)
+        startBreathing(shuffleButton, 300)
+        startBreathing(megaButton, 450)
 
-        findViewById<Button>(R.id.newGameButton).setOnClickListener { startNewGame() }
+        findViewById<View>(R.id.homeButton).setOnClickListener { goHome() }
         findViewById<Button>(R.id.restartButton).setOnClickListener { startNewGame() }
 
         gameView.onBoardChanged = { updateScores() }
         gameView.onGameOver = {
+            GameStore.clearSave(this) // a finished board isn't worth continuing
             adManager.onGameOver()
             continueButton.visibility =
                 if (adManager.isRewardedReady) View.VISIBLE else View.GONE
             gameOverOverlay.visibility = View.VISIBLE
         }
         gameView.onHammerHit = { success ->
-            if (success) {
-                hammerCount--
-                saveBoosters()
-            }
-            gameView.hammerMode = false
+            if (success) { hammerCount--; saveBoosters() }
+            gameView.tapMode = GameView.TapMode.NONE
+            updateBoosterBar()
+        }
+        gameView.onMegaBombHit = { success ->
+            if (success) { megaCount--; saveBoosters() }
+            gameView.tapMode = GameView.TapMode.NONE
             updateBoosterBar()
         }
 
         undoButton.setOnClickListener {
             bounce(undoButton)
             if (undoCount <= 0) {
-                offerRefill("boost_undo")
+                offerRefill(GameStore.KEY_UNDO)
             } else if (gameView.animateUndo()) {
-                undoCount--
-                saveBoosters()
+                undoCount--; saveBoosters()
                 gameOverOverlay.visibility = View.GONE
-                updateScores()
-                updateBoosterBar()
+                updateScores(); updateBoosterBar()
             } else {
                 toast(getString(R.string.nothing_to_undo))
             }
@@ -106,24 +116,33 @@ class MainActivity : AppCompatActivity() {
         hammerButton.setOnClickListener {
             bounce(hammerButton)
             if (hammerCount <= 0) {
-                offerRefill("boost_hammer")
+                offerRefill(GameStore.KEY_HAMMER)
             } else {
-                gameView.hammerMode = !gameView.hammerMode
-                if (gameView.hammerMode) {
-                    toast(getString(R.string.hammer_hint))
-                    hammerButton.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-                }
+                gameView.tapMode =
+                    if (gameView.tapMode == GameView.TapMode.HAMMER) GameView.TapMode.NONE
+                    else GameView.TapMode.HAMMER
+                if (gameView.tapMode == GameView.TapMode.HAMMER) toast(getString(R.string.hammer_hint))
                 updateBoosterBar()
             }
         }
         shuffleButton.setOnClickListener {
             bounce(shuffleButton)
             if (shuffleCount <= 0) {
-                offerRefill("boost_shuffle")
+                offerRefill(GameStore.KEY_SHUFFLE)
             } else if (gameView.animateShuffle()) {
-                shuffleCount--
-                saveBoosters()
-                updateScores()
+                shuffleCount--; saveBoosters()
+                updateScores(); updateBoosterBar()
+            }
+        }
+        megaButton.setOnClickListener {
+            bounce(megaButton)
+            if (megaCount <= 0) {
+                offerRefill(GameStore.KEY_MEGA)
+            } else {
+                gameView.tapMode =
+                    if (gameView.tapMode == GameView.TapMode.MEGA_BOMB) GameView.TapMode.NONE
+                    else GameView.TapMode.MEGA_BOMB
+                if (gameView.tapMode == GameView.TapMode.MEGA_BOMB) toast(getString(R.string.mega_hint))
                 updateBoosterBar()
             }
         }
@@ -133,11 +152,25 @@ class MainActivity : AppCompatActivity() {
                 gameView.game.revive()
                 gameOverOverlay.visibility = View.GONE
                 gameView.refresh()
+                updateScores()
             }
         }
 
         adManager = AdManager(this)
         adManager.initialize { loadBanner() }
+    }
+
+    /** New game vs. resume the local save, based on the launching intent. */
+    private fun startFromIntent() {
+        val mode = intent.getStringExtra(GameStore.EXTRA_MODE) ?: GameStore.MODE_NEW
+        val save = prefs.getString(GameStore.KEY_SAVE, null)
+        if (mode == GameStore.MODE_CONTINUE && !save.isNullOrEmpty() && gameView.game.loadFrom(save)) {
+            gameView.refresh()
+        } else {
+            gameView.game.reset()
+            GameStore.clearSave(this)
+            gameView.refresh()
+        }
     }
 
     /** Empty booster tapped: watch a rewarded ad to refill it. */
@@ -149,9 +182,10 @@ class MainActivity : AppCompatActivity() {
         toast(getString(R.string.refill_hint, REWARD_AMOUNT))
         adManager.showRewarded {
             when (prefKey) {
-                "boost_undo" -> undoCount += REWARD_AMOUNT
-                "boost_hammer" -> hammerCount += REWARD_AMOUNT
-                "boost_shuffle" -> shuffleCount += REWARD_AMOUNT
+                GameStore.KEY_UNDO -> undoCount += REWARD_AMOUNT
+                GameStore.KEY_HAMMER -> hammerCount += REWARD_AMOUNT
+                GameStore.KEY_SHUFFLE -> shuffleCount += REWARD_AMOUNT
+                GameStore.KEY_MEGA -> megaCount += REWARD_AMOUNT
             }
             saveBoosters()
             updateBoosterBar()
@@ -166,19 +200,38 @@ class MainActivity : AppCompatActivity() {
         setBadge(undoBadge, undoCount)
         setBadge(hammerBadge, hammerCount)
         setBadge(shuffleBadge, shuffleCount)
+        setBadge(megaBadge, megaCount)
 
-        undoButton.setBackgroundResource(if (undoCount > 0) R.drawable.booster_undo_bg else R.drawable.booster_ad_bg)
-        shuffleButton.setBackgroundResource(if (shuffleCount > 0) R.drawable.booster_shuffle_bg else R.drawable.booster_ad_bg)
+        undoButton.setBackgroundResource(
+            if (undoCount > 0) R.drawable.booster_undo_bg else R.drawable.booster_ad_bg
+        )
+        shuffleButton.setBackgroundResource(
+            if (shuffleCount > 0) R.drawable.booster_shuffle_bg else R.drawable.booster_ad_bg
+        )
+        val hammerArmed = gameView.tapMode == GameView.TapMode.HAMMER
         hammerButton.setBackgroundResource(
             when {
-                gameView.hammerMode -> R.drawable.booster_armed_bg
+                hammerArmed -> R.drawable.booster_armed_bg
                 hammerCount > 0 -> R.drawable.booster_hammer_bg
                 else -> R.drawable.booster_ad_bg
             }
         )
-        hammerButton.animate()
-            .scaleX(if (gameView.hammerMode) 1.12f else 1f)
-            .scaleY(if (gameView.hammerMode) 1.12f else 1f)
+        val megaArmed = gameView.tapMode == GameView.TapMode.MEGA_BOMB
+        megaButton.setBackgroundResource(
+            when {
+                megaArmed -> R.drawable.booster_mega_armed_bg
+                megaCount > 0 -> R.drawable.booster_mega_bg
+                else -> R.drawable.booster_ad_bg
+            }
+        )
+        armScale(hammerButton, hammerArmed)
+        armScale(megaButton, megaArmed)
+    }
+
+    private fun armScale(view: View, armed: Boolean) {
+        view.animate()
+            .scaleX(if (armed) 1.12f else 1f)
+            .scaleY(if (armed) 1.12f else 1f)
             .setInterpolator(OvershootInterpolator())
             .setDuration(180)
             .start()
@@ -198,7 +251,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun bounce(view: View) {
-        view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        if (GameSettings.vibration) view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
         view.animate().scaleX(0.85f).scaleY(0.85f).setDuration(80).withEndAction {
             view.animate().scaleX(1f).scaleY(1f).setDuration(140)
                 .setInterpolator(OvershootInterpolator()).start()
@@ -207,9 +260,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun saveBoosters() {
         prefs.edit()
-            .putInt("boost_undo", undoCount)
-            .putInt("boost_hammer", hammerCount)
-            .putInt("boost_shuffle", shuffleCount)
+            .putInt(GameStore.KEY_UNDO, undoCount)
+            .putInt(GameStore.KEY_HAMMER, hammerCount)
+            .putInt(GameStore.KEY_SHUFFLE, shuffleCount)
+            .putInt(GameStore.KEY_MEGA, megaCount)
             .apply()
     }
 
@@ -227,7 +281,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun startNewGame() {
         gameView.game.reset()
-        gameView.hammerMode = false
+        gameView.tapMode = GameView.TapMode.NONE
+        GameStore.clearSave(this)
         gameOverOverlay.visibility = View.GONE
         updateScores()
         updateBoosterBar()
@@ -238,16 +293,36 @@ class MainActivity : AppCompatActivity() {
         val score = gameView.game.score
         if (score > bestScore) {
             bestScore = score
-            prefs.edit().putInt("best_score", bestScore).apply()
+            prefs.edit().putInt(GameStore.KEY_BEST, bestScore).apply()
         }
         scoreText.text = score.toString()
         bestText.text = bestScore.toString()
     }
 
-    private fun toast(msg: String) =
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    /** Persist the board locally so Continue can resume it (no cloud). */
+    private fun persistGame() {
+        if (gameView.game.hasProgress) {
+            prefs.edit().putString(GameStore.KEY_SAVE, gameView.game.serialize()).apply()
+        } else {
+            GameStore.clearSave(this)
+        }
+    }
+
+    private fun goHome() {
+        persistGame()
+        finish()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        persistGame()
+        super.onBackPressed()
+    }
+
+    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 
     override fun onPause() {
+        persistGame()
         adView?.pause()
         super.onPause()
     }
@@ -261,6 +336,7 @@ class MainActivity : AppCompatActivity() {
         undoButton.animate().cancel()
         hammerButton.animate().cancel()
         shuffleButton.animate().cancel()
+        megaButton.animate().cancel()
         adView?.destroy()
         super.onDestroy()
     }

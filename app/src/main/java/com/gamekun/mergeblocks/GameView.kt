@@ -34,14 +34,18 @@ class GameView @JvmOverloads constructor(
     var onBoardChanged: (() -> Unit)? = null
     var onGameOver: (() -> Unit)? = null
 
-    /** When true, a tap smashes a tile instead of swiping. */
-    var hammerMode = false
+    /** A tap targets a tile/area instead of swiping while a targeting booster is armed. */
+    enum class TapMode { NONE, HAMMER, MEGA_BOMB }
+
+    var tapMode = TapMode.NONE
         set(value) {
             field = value
             hoverR = -1; hoverC = -1
             invalidate()
         }
-    var onHammerHit: ((Boolean) -> Unit)? = null // success -> consumed a charge
+
+    var onHammerHit: ((Boolean) -> Unit)? = null    // success -> consumed a hammer charge
+    var onMegaBombHit: ((Boolean) -> Unit)? = null  // success -> consumed a mega-bomb charge
 
     // ------------------------------------------------------------ paints
 
@@ -190,11 +194,11 @@ class GameView @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 downX = event.x
                 downY = event.y
-                if (hammerMode) updateHover(event.x, event.y)
+                if (tapMode != TapMode.NONE) updateHover(event.x, event.y)
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
-                if (hammerMode) updateHover(event.x, event.y)
+                if (tapMode != TapMode.NONE) updateHover(event.x, event.y)
                 return true
             }
             MotionEvent.ACTION_UP -> {
@@ -202,8 +206,11 @@ class GameView @JvmOverloads constructor(
                 val dx = event.x - downX
                 val dy = event.y - downY
                 val threshold = boardSide * 0.06f
-                if (hammerMode && abs(dx) < threshold && abs(dy) < threshold) {
+                val isTap = abs(dx) < threshold && abs(dy) < threshold
+                if (tapMode == TapMode.HAMMER && isTap) {
                     handleHammerTap(event.x, event.y)
+                } else if (tapMode == TapMode.MEGA_BOMB && isTap) {
+                    handleMegaBombTap(event.x, event.y)
                 } else if (abs(dx) >= threshold || abs(dy) >= threshold) {
                     val dir = if (abs(dx) > abs(dy)) {
                         if (dx > 0) Game2048.Direction.RIGHT else Game2048.Direction.LEFT
@@ -253,7 +260,7 @@ class GameView @JvmOverloads constructor(
             shatter(cellCenterX(c), cellCenterY(r), color)
             burst(cellCenterX(c), cellCenterY(r), Color.WHITE, 16, big = true)
             shake(250, 1f)
-            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            haptic(HapticFeedbackConstants.LONG_PRESS)
             activeAnims = null
             onHammerHit?.invoke(true)
             onBoardChanged?.invoke()
@@ -261,6 +268,36 @@ class GameView @JvmOverloads constructor(
         } else {
             onHammerHit?.invoke(false)
         }
+    }
+
+    private fun handleMegaBombTap(x: Float, y: Float) {
+        val (r, c) = cellAt(x, y) ?: return
+        val cleared = game.megaBomb(r, c)
+        if (cleared.isEmpty()) {
+            onMegaBombHit?.invoke(false)
+            return
+        }
+        // Big central blast plus a shard/spark burst on every obliterated cell.
+        val cx = cellCenterX(c)
+        val cy = cellCenterY(r)
+        burst(cx, cy, Color.parseColor("#FFD23F"), 40, big = true)
+        burst(cx, cy, Color.parseColor("#FF3B30"), 30, big = true)
+        for (cell in cleared) {
+            val px = cellCenterX(cell.c)
+            val py = cellCenterY(cell.r)
+            shatter(px, py, Color.parseColor("#FF6B35"))
+            burst(px, py, Color.parseColor("#FFB03A"), 12, big = true)
+        }
+        shake(520, 2.2f)
+        flashUntil = now() + 240
+        flashColor = Color.parseColor("#FF6B35")
+        showActionBanner("💥 MEGA BOMB", Color.parseColor("#FF6B35"))
+        haptic(HapticFeedbackConstants.LONG_PRESS)
+        activeAnims = null
+        onMegaBombHit?.invoke(true)
+        onBoardChanged?.invoke()
+        invalidate()
+        if (game.isGameOver) postDelayed({ onGameOver?.invoke() }, 400)
     }
 
     /** Snapshot of every tile's current cell, keyed by tile id. */
@@ -295,7 +332,7 @@ class GameView @JvmOverloads constructor(
         flashUntil = now() + 260
         flashColor = Color.parseColor("#4FC3F7")
         showActionBanner("↩ UNDONE", Color.parseColor("#4FC3F7"))
-        performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        haptic(HapticFeedbackConstants.CONTEXT_CLICK)
         invalidate()
         return true
     }
@@ -316,7 +353,7 @@ class GameView @JvmOverloads constructor(
             )
         }
         showActionBanner("🔀 SHUFFLED", Color.parseColor("#C79BEB"))
-        performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        haptic(HapticFeedbackConstants.CONTEXT_CLICK)
         invalidate()
         return true
     }
@@ -363,7 +400,7 @@ class GameView @JvmOverloads constructor(
             )
         }
         if (result.merges.isNotEmpty()) {
-            performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+            haptic(HapticFeedbackConstants.CONTEXT_CLICK)
         }
         for (cell in result.explosions) {
             val cx = cellCenterX(cell.c)
@@ -375,7 +412,7 @@ class GameView @JvmOverloads constructor(
             shake(400, 1.6f)
             flashUntil = now() + 180
             flashColor = Color.parseColor("#FF6B35")
-            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            haptic(HapticFeedbackConstants.LONG_PRESS)
         }
         for (cell in result.crumbled) {
             burst(cellCenterX(cell.c), cellCenterY(cell.r), blockerLight, 16)
@@ -389,8 +426,13 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun shake(durationMs: Long, magnitude: Float) {
+        if (!GameSettings.screenShake) return
         shakeUntil = now() + durationMs
         shakeMagnitude = magnitude
+    }
+
+    private fun haptic(kind: Int) {
+        if (GameSettings.vibration) performHapticFeedback(kind)
     }
 
     private fun burst(x: Float, y: Float, color: Int, count: Int, big: Boolean = false) {
@@ -488,7 +530,7 @@ class GameView @JvmOverloads constructor(
         }
 
         drawHoverHighlight(canvas, time)
-        drawHammerFrame(canvas, time)
+        drawArmedFrame(canvas, time)
         drawEffects(canvas, dt)
         drawFullScreenFlash(canvas, time)
         drawComboBanner(canvas, time)
@@ -497,7 +539,7 @@ class GameView @JvmOverloads constructor(
         val hasBomb = game.board.any { row -> row.any { it?.type == Game2048.TileType.BOMB } }
         if (particles.isNotEmpty() || floatTexts.isNotEmpty() ||
             time < shakeUntil || time < comboFlashUntil || time < flashUntil ||
-            time < actionBannerUntil || hammerMode || hasBomb || progress < 1f
+            time < actionBannerUntil || tapMode != TapMode.NONE || hasBomb || progress < 1f
         ) {
             postInvalidateOnAnimation()
         } else {
@@ -632,12 +674,15 @@ class GameView @JvmOverloads constructor(
     private fun textBaseline(centerY: Float) =
         centerY - (textPaint.descent() + textPaint.ascent()) / 2f
 
-    /** While hammer mode is armed: pulsing "marching ants" border around the whole board. */
-    private fun drawHammerFrame(canvas: Canvas, time: Long) {
-        if (!hammerMode) return
+    private fun armedColor() =
+        if (tapMode == TapMode.MEGA_BOMB) Color.parseColor("#FF6B35") else hazardYellow
+
+    /** While a targeting booster is armed: pulsing "marching ants" border around the whole board. */
+    private fun drawArmedFrame(canvas: Canvas, time: Long) {
+        if (tapMode == TapMode.NONE) return
         val dashLen = gap * 3f
         strokePaint.strokeWidth = gap * 1.4f
-        strokePaint.color = hazardYellow
+        strokePaint.color = armedColor()
         strokePaint.pathEffect = DashPathEffect(
             floatArrayOf(dashLen, gap * 2f),
             (time % 900L) / 900f * (dashLen + gap * 2f)
@@ -650,18 +695,24 @@ class GameView @JvmOverloads constructor(
         strokePaint.pathEffect = null
     }
 
+    /** Highlights the tap target: a single cell for hammer, the full 3x3 blast area for mega bomb. */
     private fun drawHoverHighlight(canvas: Canvas, time: Long) {
-        if (!hammerMode || hoverR < 0 || hoverC < 0) return
-        val rect = cellRect(cellX(hoverC), cellY(hoverR), 1f)
+        if (tapMode == TapMode.NONE || hoverR < 0 || hoverC < 0) return
+        val color = armedColor()
+        val radius = if (tapMode == TapMode.MEGA_BOMB) 1 else 0
+        overlayPaint.color = color
+        overlayPaint.alpha = 70
+        for (dr in -radius..radius) for (dc in -radius..radius) {
+            val rr = hoverR + dr
+            val cc = hoverC + dc
+            if (rr !in 0 until Game2048.SIZE || cc !in 0 until Game2048.SIZE) continue
+            canvas.drawRoundRect(cellRect(cellX(cc), cellY(rr), 1f), gap, gap, overlayPaint)
+        }
         val pulse = 1f + 0.06f * sin(time / 70.0).toFloat()
-        val scaled = cellRect(cellX(hoverC), cellY(hoverR), pulse)
         strokePaint.pathEffect = null
-        strokePaint.color = hazardYellow
+        strokePaint.color = color
         strokePaint.strokeWidth = gap
-        canvas.drawRoundRect(scaled, gap, gap, strokePaint)
-        overlayPaint.color = hazardYellow
-        overlayPaint.alpha = 60
-        canvas.drawRoundRect(rect, gap, gap, overlayPaint)
+        canvas.drawRoundRect(cellRect(cellX(hoverC), cellY(hoverR), pulse), gap, gap, strokePaint)
     }
 
     private fun drawEffects(canvas: Canvas, dt: Float) {

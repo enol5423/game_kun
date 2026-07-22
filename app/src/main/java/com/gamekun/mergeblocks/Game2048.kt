@@ -223,6 +223,34 @@ class Game2048 {
         return true
     }
 
+    /**
+     * Mega-bomb powerup: obliterates every tile in the 3x3 area centred on (r,c),
+     * traps included. Destroyed number tiles are added to the score as a bonus.
+     * Returns the cleared cells (for the explosion animation), empty if nothing hit.
+     */
+    fun megaBomb(r: Int, c: Int): List<Cell> {
+        val cleared = ArrayList<Cell>()
+        for (dr in -1..1) for (dc in -1..1) {
+            val rr = r + dr
+            val cc = c + dc
+            if (rr in 0 until SIZE && cc in 0 until SIZE && board[rr][cc] != null) {
+                cleared.add(Cell(rr, cc))
+            }
+        }
+        if (cleared.isEmpty()) return emptyList()
+        undoState = snapshot()
+        var bonus = 0
+        for (cell in cleared) {
+            val tile = board[cell.r][cell.c]!!
+            if (tile.type == TileType.NORMAL) bonus += tile.value
+            board[cell.r][cell.c] = null
+        }
+        score += bonus
+        if (allTiles().isEmpty()) spawnNumber()
+        isGameOver = !hasMovesLeft()
+        return cleared
+    }
+
     /** Randomly repositions every movable tile (blockers stay put). */
     fun shuffle(): Boolean {
         val movable = ArrayList<Tile>()
@@ -258,6 +286,53 @@ class Game2048 {
         combo = 0
         isGameOver = false
         undoState = null
+    }
+
+    // ------------------------------------------------------ save / restore
+
+    /** True if this game still has moves left and isn't a trivial empty state. */
+    val hasProgress: Boolean
+        get() = !isGameOver && (score > 0 || allTiles().size > 2)
+
+    /** Serializes the full game state to a compact string for local Continue. */
+    fun serialize(): String {
+        val cells = ArrayList<String>(SIZE * SIZE)
+        for (r in 0 until SIZE) for (c in 0 until SIZE) {
+            val t = board[r][c]
+            cells.add(if (t == null) "-" else "${t.id}:${t.value}:${t.type.ordinal}:${t.timer}")
+        }
+        return "$score;$combo;$moveCount;$nextId;${cells.joinToString(",")}"
+    }
+
+    /** Restores state produced by [serialize]; returns false if the data is unusable. */
+    fun loadFrom(data: String): Boolean {
+        return try {
+            val parts = data.split(';')
+            val newScore = parts[0].toInt()
+            val newCombo = parts[1].toInt()
+            val newMoveCount = parts[2].toInt()
+            val newNextId = parts[3].toInt()
+            val cells = parts[4].split(',')
+            if (cells.size != SIZE * SIZE) return false
+            val newBoard = Array(SIZE) { arrayOfNulls<Tile>(SIZE) }
+            for (i in cells.indices) {
+                val token = cells[i]
+                if (token == "-") continue
+                val f = token.split(':')
+                newBoard[i / SIZE][i % SIZE] =
+                    Tile(f[0].toInt(), f[1].toInt(), TileType.values()[f[2].toInt()], f[3].toInt())
+            }
+            board = newBoard
+            score = newScore
+            combo = newCombo
+            moveCount = newMoveCount
+            nextId = newNextId
+            undoState = null
+            isGameOver = !hasMovesLeft()
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     // ------------------------------------------------------------ internals

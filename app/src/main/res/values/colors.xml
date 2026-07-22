@@ -6,4 +6,11 @@
     <color name="text_light">#F5EFFA</color>
     <color name="text_dark">#3B2A4A</color>
     <color name="score_box">#5D4A66</color>
+
+    <color name="panel">#4A3757</color>
+    <color name="panel_stroke">#7A659A</color>
+    <color name="green">#2FB65E</color>
+    <color name="green_dark">#1E9E52</color>
+    <color name="danger">#FF6B35</color>
+    <color name="text_dim">#C9B8D6</color>
 </resources>

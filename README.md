@@ -24,8 +24,34 @@ important if you publish this app).
   - ↩ **Undo** — take back the last action.
   - 🔨 **Hammer** — tap any tile (including traps) to smash it.
   - 🔀 **Shuffle** — reshuffle all movable tiles when you're cornered.
+  - 💥 **Mega Bomb** — arm it, then tap the board to obliterate a whole
+    3×3 area (traps included); destroyed tiles pay out a score bonus.
 - **Continue after game over** by watching a rewarded ad (clears traps and
   the smallest tiles).
+
+## Screens & flow
+
+A full front-end, no cloud/backend — all state (best score, boosters, the
+saved game) lives in local SharedPreferences:
+
+`Splash` (company / engine / legal logos) → `Title` (visual anchor,
+tap-to-start) → `Main Menu` (New Game · Continue · Settings · Extra Content)
+→ `Loading` (asset progress bar + rotating tips) → `Gameplay`.
+
+- **Continue** resumes the exact board saved on the device; **New Game**
+  starts fresh.
+- **Settings** — vibration and screen-shake toggles (wired live into the
+  game), reset best score, restore free boosters.
+- **Extra Content** — how to play, traps, boosters and credits.
+
+**Internet is required to play.** Since the app is ad-supported, a
+connection check gates the splash screen and the loading screen; offline
+users get a "No Connection / Retry" screen. If you'd rather let people play
+offline (usually better for retention and reviews), remove the
+`Connectivity.isOnline(...)` gate in `SplashActivity` and `LoadingActivity`.
+Because the app now touches the network by design, keep `INTERNET` +
+`ACCESS_NETWORK_STATE` in the manifest and declare data sharing (AdMob) in
+the Play **Data safety** form.
 
 Monetization is **AdMob only** (no in-app purchases, no ad spend needed):
 
@@ -33,7 +59,7 @@ Monetization is **AdMob only** (no in-app purchases, no ad spend needed):
 |--------------|-------------------------------------------------|
 | Banner       | Bottom of the screen, always                    |
 | Interstitial | Every 3rd game over (`AdManager.INTERSTITIAL_FREQUENCY`) |
-| Rewarded     | "Watch ad to continue" button on game over      |
+| Rewarded     | "Watch ad to continue" on game over, and booster refills |
 
 GDPR/EEA consent is handled via Google's UMP SDK (the consent form shows
 automatically where required).
@@ -106,24 +132,30 @@ own real ads** (AdMob bans the account).
 ## Credits (required if you publish)
 
 The bomb, padlock, hammer, undo and shuffle icons (`app/src/main/res/drawable/
-ic_bomb.xml`, `ic_lock.xml`, `ic_hammer.xml`, `ic_undo.xml`, `ic_shuffle.xml`)
-are from [Game-Icons.net](https://game-icons.net), licensed
-**CC BY 3.0** — free to use commercially, but attribution is legally required.
-Everything else (code, tile colors, layout, app icon, sounds/haptics) is
-original to this project.
-
-Before you publish, add a credit somewhere a player can find it — the
-simplest options:
-- A line in the Play Store store listing description, e.g. "Icons by
-  game-icons.net, CC BY 3.0."
-- Or an in-app "About" entry with the same text.
+the game bomb/lock/hammer/undo/shuffle plus the mega-bomb, cog, play, book,
+trophy, info and wifi icons in `app/src/main/res/drawable/ic_*.xml`) are from
+[Game-Icons.net](https://game-icons.net), licensed **CC BY 3.0** — free to use
+commercially, but attribution is legally required. Everything else (code, tile
+colors, layout, logo emblem, app icon) is original to this project. The
+in-app **Extra Content → Credits** screen already shows this attribution, so
+the requirement is satisfied in-app; keep it there (or also add the line to
+your Play Store description).
 
 ## Project layout
 
 ```
 app/src/main/java/com/gamekun/mergeblocks/
-  Game2048.kt     # pure game logic (unit-testable, no Android deps)
-  GameView.kt     # canvas rendering + swipe input
-  AdManager.kt    # UMP consent + banner/interstitial/rewarded ads
-  MainActivity.kt # UI wiring, score persistence, game-over overlay
+  Game2048.kt          # pure game logic + traps, mega bomb, save/load (no Android deps)
+  GameView.kt          # canvas rendering, animations, tap-targeting boosters
+  AdManager.kt         # UMP consent + banner/interstitial/rewarded ads
+  GameSettings.kt      # vibration / screen-shake flags (SharedPreferences)
+  GameStore.kt         # shared prefs keys + best/save/booster helpers
+  Connectivity.kt      # online check for the internet gate
+  SplashActivity.kt    # company / engine / legal logos
+  TitleActivity.kt     # visual anchor + tap-to-start
+  MenuActivity.kt      # New / Continue / Settings / Extra Content
+  LoadingActivity.kt   # asset progress bar + tips, launches gameplay
+  SettingsActivity.kt  # toggles + local data resets
+  ExtraContentActivity.kt # how-to-play, traps, boosters, credits
+  MainActivity.kt      # gameplay wiring, score/save persistence, boosters
 ```

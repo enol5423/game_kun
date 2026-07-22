@@ -19,13 +19,24 @@
             android:paddingEnd="16dp"
             android:paddingTop="12dp">
 
+            <ImageView
+                android:id="@+id/homeButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="9dp"
+                android:src="@drawable/ic_undo"
+                app:tint="@color/text_light"
+                android:contentDescription="@string/back" />
+
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginStart="6dp"
                 android:text="@string/app_title"
                 android:textColor="@color/text_light"
-                android:textSize="24sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <LinearLayout
@@ -156,20 +167,31 @@
                     android:textColor="@color/text_light" />
             </LinearLayout>
 
-            <Button
-                android:id="@+id/newGameButton"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/megaButton"
+                style="@style/BoosterButton"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:backgroundTint="@color/accent"
-                android:text="@string/new_game_short"
-                android:textColor="@color/text_light" />
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/megaIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_mega_bomb"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/megaBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_light" />
+            </LinearLayout>
         </LinearLayout>
 
         <com.gamekun.mergeblocks.GameView

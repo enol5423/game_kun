@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <include
+        android:id="@+id/header"
+        layout="@layout/include_screen_header" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <TextView style="@style/CardTitle" android:text="@string/how_to_play" />
+            <TextView style="@style/CardBody" android:text="@string/how_to_play_body" />
+
+            <TextView style="@style/CardTitle" android:text="@string/traps_title" />
+            <TextView style="@style/CardBody" android:text="@string/traps_body" />
+
+            <TextView style="@style/CardTitle" android:text="@string/boosters_title" />
+            <TextView style="@style/CardBody" android:text="@string/boosters_body" />
+
+            <TextView style="@style/CardTitle" android:text="@string/credits" />
+            <TextView style="@style/CardBody" android:text="@string/credits_body" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

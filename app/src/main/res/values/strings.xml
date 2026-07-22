@@ -10,7 +10,63 @@
     <string name="watch_ad_continue">Watch ad to continue</string>
     <string name="ad_badge">AD</string>
     <string name="hammer_hint">Tap any tile to smash it!</string>
+    <string name="mega_hint">Tap a tile — the mega bomb clears a 3×3 area!</string>
     <string name="nothing_to_undo">Nothing to undo yet</string>
     <string name="no_ad_available">No ad available right now, try again soon</string>
     <string name="refill_hint">Watch the ad to earn %d boosters!</string>
+
+    <!-- Branding / splash -->
+    <string name="company_name">GAMEKUN STUDIOS</string>
+    <string name="company_tagline">presents</string>
+    <string name="splash_engine">Made with Kotlin · Android</string>
+    <string name="splash_legal">Ads by Google AdMob\nIcons by game-icons.net — CC BY 3.0\nAll trademarks are property of their respective owners.</string>
+    <string name="subtitle_2048">2048 · MERGE PUZZLE</string>
+    <string name="tap_to_start">TAP TO START</string>
+    <string name="app_version">v1.0</string>
+
+    <!-- Main menu -->
+    <string name="menu_new">NEW GAME</string>
+    <string name="menu_continue">CONTINUE</string>
+    <string name="menu_settings">SETTINGS</string>
+    <string name="menu_extra">EXTRA CONTENT</string>
+
+    <!-- Loading -->
+    <string name="loading">LOADING</string>
+    <string name="loading_percent">%d%%</string>
+    <string name="tip_label">TIP</string>
+    <string-array name="loading_tips">
+        <item>Chain merges on back-to-back swipes to build a combo multiplier up to ×4.</item>
+        <item>Blockers crumble on their own after 10 moves — or smash them with the hammer.</item>
+        <item>A bomb never merges. Move it away or it clears a 3×3 area when the fuse hits 0.</item>
+        <item>Out of room? The Mega Bomb wipes a whole 3×3 area — including traps.</item>
+        <item>Stuck? Shuffle re-scatters the board; Undo takes back your last move.</item>
+        <item>Empty boosters can be refilled instantly by watching a short ad.</item>
+    </string-array>
+
+    <!-- Connection gate -->
+    <string name="no_connection_title">No Internet Connection</string>
+    <string name="no_connection_body">Merge Blocks needs an internet connection to play. Please reconnect and try again.</string>
+    <string name="retry">RETRY</string>
+
+    <!-- Settings -->
+    <string name="settings_title">SETTINGS</string>
+    <string name="set_vibration">Vibration</string>
+    <string name="set_vibration_sub">Haptic feedback on merges and blasts</string>
+    <string name="set_shake">Screen Shake</string>
+    <string name="set_shake_sub">Camera shake on explosions</string>
+    <string name="reset_best">Reset Best Score</string>
+    <string name="reset_boosters">Restore Free Boosters</string>
+    <string name="reset_done">Done!</string>
+    <string name="back">BACK</string>
+
+    <!-- Extra content -->
+    <string name="extra_title">EXTRA CONTENT</string>
+    <string name="how_to_play">HOW TO PLAY</string>
+    <string name="how_to_play_body">Swipe to slide all tiles. When two tiles with the same number touch, they merge into one worth double. Fill the board with no moves left and it\'s game over.\n\nMerge on consecutive swipes to stack a COMBO multiplier (up to ×4) for bonus points.</string>
+    <string name="traps_title">TRAPS</string>
+    <string name="traps_body">🔒 Blocker — an immovable stone that splits the board. It crumbles after 10 moves.\n\n💣 Bomb — slides but never merges. Its fuse ticks down each move; at 0 it explodes a 3×3 area.</string>
+    <string name="boosters_title">BOOSTERS</string>
+    <string name="boosters_body">↩ Undo — take back your last action.\n🔨 Hammer — tap any single tile to smash it.\n🔀 Shuffle — re-scatter every movable tile.\n💥 Mega Bomb — tap to blow up a whole 3×3 area, traps included.\n\nRun out? Watch a short ad to refill.</string>
+    <string name="credits">CREDITS</string>
+    <string name="credits_body">Game design &amp; code: original work.\n\nIcons from game-icons.net, licensed CC BY 3.0.\n\nAds &amp; consent by Google AdMob / UMP.</string>
 </resources>
